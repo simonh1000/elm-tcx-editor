@@ -1,3 +1,21 @@
 body {
-    background-color: #333;
+    background-color: #eee;
+}
+
+.upload .img-container {
+    text-align: center;
+}
+
+.upload img {
+    width: 60%;
+}
+
+#map {
+    width: 200px;
+    height: 200px;
+    background-color: grey;
+}
+
+.data-table tr:hover {
+    cursor: pointer;
 }

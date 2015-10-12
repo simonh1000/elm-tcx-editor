@@ -2,6 +2,8 @@ module TcxDecoder (tcxDecoder, Model, Lap, Trackpoint, Position) where
 
 import Json.Decode as Json exposing (..)
 import String exposing (toInt, toFloat)
+import Date exposing (Date)
+import Result
 
 type alias Model = List Lap
 
@@ -12,7 +14,8 @@ type alias Lap =
     }
 
 type alias Trackpoint =
-    { time: String
+    -- { time: String
+    { time: Date
     , position: Position
     , distance: Float
     }
@@ -49,7 +52,8 @@ trackDecoder = "Track" := tuple1 identity ("Trackpoint" := list tpDecoder)
 tpDecoder : Decoder Trackpoint
 tpDecoder =
     object3 Trackpoint
-        ("Time" := tuple1 identity string)
+        xtractDate
+        -- ("Time" := tuple1 identity string)
         ("Position" := tuple1 identity posDecoder)
         (xtractFloat "DistanceMeters")
 
@@ -66,4 +70,6 @@ posDecoder =
 
 xtractFloat: String -> Decoder Float
 xtractFloat str = customDecoder (str := tuple1 identity string) String.toFloat
--- "TotalTimeSeconds" := tuple1 go string
+
+xtractDate: Decoder Date
+xtractDate = customDecoder ("Time" := tuple1 identity string) Date.fromString

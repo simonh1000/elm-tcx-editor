@@ -8,51 +8,62 @@ import Http
 import Effects exposing (Effects)
 import Task exposing (Task)
 
+import English
 import TcxDecoder exposing (tcxDecoder)
 import FileReader exposing (getTextFile)
 
 -- MODEL
 
--- type alias Model = String
 type alias Model =
-    { rawdata : String
-    , jsonData: TcxDecoder.Model
+    { raw : String
+    , json: TcxDecoder.Model
     }
 
 init : Model
--- init = ""
 init =
-    { rawdata = ""
-    , jsonData = []
+    { raw = ""
+    , json = []
     }
 
 -- UPDATE
 
 type Action =
         Upload
+      | Demo
       | FileData String
       | JsonData (Result Http.Error TcxDecoder.Model)
+      | Ready
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
     case action of
         Upload -> ( model, loadData )
-        FileData str -> ( {model | rawdata <- str}, sendToRemote str )
-        JsonData res -> (model, Effects.none)
+        Demo   -> ( model, getDemoData )
+        FileData str -> ( {model | raw <- str}, sendToRemote str )
+        JsonData res ->
+            case res of
+                Result.Ok j -> ( { model | json <- j }, Effects.task (Task.succeed Ready))
+                -- on error just leave the uploaded contents showing
+                Result.Err e -> ( model, Effects.none )
 
 -- VIEW
 
 view : Signal.Address Action -> Model -> Html
 view address model =
-    div []
-        [ p [] [ text "Upload file" ]
-        , input [ type' "file", id "input" ] []
-        , button [ onClick address Upload ] [ text "Upload" ]
+    div [ class "upload row" ]
+        [ div [ class "col-xs-6" ]
+            [ English.intro
+            , input [ type' "file", id "input" ] []
+            , button [ onClick address Upload, class "btn btn-primary" ] [ text "Upload" ]
+            , button [ onClick address Demo, class "btn btn-primary" ] [ text "Demo" ]
+            , div [] [ text model.raw ]
+            ]
+        ,  div [ class "img-container col-xs-6" ]
+            [ img [ src "editor.png" ] [] ]
         ]
 
--- TASKS
+-- TASK : Read File
 
--- Read File
 -- getTextFile : String -> Task FileReader.Error String
 loadData : Effects Action
 loadData =
@@ -67,16 +78,39 @@ errorMapper err =
         FileReader.NoFileSpecified -> "No file specified"
 
 
--- Converting to Json
-
--- processor : String -> Model
--- processor rawData = []
+-- TASK - Converting to Json
 
 -- post : Decoder value -> String -> Body -> Task Error value
 sendToRemote : String -> Effects Action
-sendToRemote rawData =
-    -- Http.post tcxDecoder "http://localhost:5000/tcx/tojson" (Http.string rawData)
+sendToRemote raw =
+    Http.post tcxDecoder "http://localhost:5000/tcx" (Http.string <| "data=" ++ Http.uriEncode raw)
+        |> Task.toResult
+        |> Task.map JsonData
+        |> Effects.task
+
+
+getDemoData : Effects Action
+getDemoData =
     Http.get tcxDecoder "http://localhost:5000/tcx/test"
         |> Task.toResult
         |> Task.map JsonData
         |> Effects.task
+
+-- STYLES
+
+
+-- -- -- --
+    -- Http.post tcxDecoder "http://localhost:5000/tcx" (Http.string <| "data=test")
+    -- Http.post tcxDecoder "http://localhost:5000/tcx" (Http.string """{ "xxxxsortBy": "xxxxxcoolness", "take": 10 }""")
+    -- mypost
+    -- Http.post tcxDecoder "http://localhost:5000/tcx/?data=testdata" (Http.string "")
+    -- Http.post
+        -- tcxDecoder ("http://localhost:5000/tcx?data=" ++ Http.uriEncode raw) (Http.string "")
+-- mypost : Task Http.RawError Http.Response
+-- mypost =
+--   Http.send Http.defaultSettings
+--     { verb = "POST"
+--     , headers = [("content-type", "form-url-encoded")]
+--     , url = "http://localhost:5000/tcx"
+--     , body = (Http.string """{ "xxxxsortBy": "xxxxxcoolness", "take": 10 }""")
+--     }
