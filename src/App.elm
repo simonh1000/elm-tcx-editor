@@ -1,4 +1,4 @@
-module App (AppState, Model, init, update, view, toString) where
+module App (Action(..), Model, AppState, init, update, view, toString) where
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -6,12 +6,13 @@ import Html.Attributes exposing (..)
 import Effects exposing (Effects)
 
 import Upload exposing (Action(..))
-import Editor
+import Editor exposing (Action(..))
 import TcxDecoder exposing (Model)
 
 -- MODEL
 type AppState =
       Uploading
+    | Transitioning
     | Editing
     | ErrorState
 
@@ -19,18 +20,23 @@ toString : AppState -> String
 toString a =
     case a of
         Uploading -> "Uploading"
+        Transitioning -> "Transitioning"
         Editing -> "Editing"
         ErrorState -> "Error"
 
 type alias Model =
     { state : AppState
     , data : Upload.Model
+    -- , editor : Editor.Model
+    , zoom : Int
     }
 
 init : Model
 init =
     { state = Uploading
     , data = Upload.init
+    -- , editor = Editor.init []
+    , zoom = 12
     }
 
 -- UPDATE
@@ -38,23 +44,32 @@ init =
 type Action =
       Uploader Upload.Action
     | Editor Editor.Action
+    | MapLoaded
+    | SetZoom Int
 
 update : Action -> Model -> (Model, Effects Action)
 update action model =
     case action of
         Uploader Ready -> ({ model | state <- Editing }, Effects.none)
-        Uploader data ->
+        Uploader data ->                                 -- i.e. otherwise pass raw data for conversion
             let
                 tmp = Upload.update data model.data
                 newModel =
                     { model | data <- fst tmp
                     }
-            in (newModel, Effects.map Uploader (snd tmp))
-        Editor editorAction -> (model, Effects.none)
-        otherwise ->
-            let newModel =
-                { model | state <- ErrorState }
-            in (newModel, Effects.none)
+            in (newModel, Effects.map Uploader (snd tmp))  -- wrap uploaders effect top level Action
+        Editor editorAction -> -- (model, Effects.none)
+            case editorAction of
+                GotoUpload -> (
+                    { model | state <- Uploading
+                            ,  data <- Upload.init
+                    }, Effects.none)
+                otherwise -> ( model, Effects.none)
+        SetZoom z -> ( { model | zoom <- z }, Effects.none )
+        -- otherwise ->
+        --     let newModel =
+        --         { model | state <- ErrorState }
+        --     in (newModel, Effects.none)
 
 -- VIEW
 
@@ -76,4 +91,5 @@ view address model =
                     [ h1 [] [ text "Garmin GPS .tcx editor" ] ]
                 ]
             , viewTemplate
+            , img [ src "ElmLogo.png" ] []
             ]

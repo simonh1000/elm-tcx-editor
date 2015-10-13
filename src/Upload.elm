@@ -17,12 +17,14 @@ import FileReader exposing (getTextFile)
 type alias Model =
     { raw : String
     , json: TcxDecoder.Model
+    , errorMessage : String
     }
 
 init : Model
 init =
     { raw = ""
     , json = []
+    , errorMessage = ""
     }
 
 -- UPDATE
@@ -44,7 +46,14 @@ update action model =
             case res of
                 Result.Ok j -> ( { model | json <- j }, Effects.task (Task.succeed Ready))
                 -- on error just leave the uploaded contents showing
-                Result.Err e -> ( model, Effects.none )
+                Result.Err e ->
+                    ( { model | errorMessage <- converterErrorHandler e }, Effects.none )
+
+converterErrorHandler : Http.Error -> String
+converterErrorHandler err =
+    case err of
+        Http.UnexpectedPayload s -> s
+        otherwise -> "http error"
 
 -- VIEW
 
@@ -53,10 +62,15 @@ view address model =
     div [ class "upload row" ]
         [ div [ class "col-xs-6" ]
             [ English.intro
-            , input [ type' "file", id "input" ] []
-            , button [ onClick address Upload, class "btn btn-primary" ] [ text "Upload" ]
-            , button [ onClick address Demo, class "btn btn-primary" ] [ text "Demo" ]
-            , div [] [ text model.raw ]
+            , div []
+                [ span [ class "btn btn-default btn-file" ]
+                    [ text "Find file"
+                    , input [ type' "file", id "input" ] [  ]
+                    ]
+                , button [ onClick address Upload, class "btn btn-primary" ] [ text "Upload" ]
+                , div [ class "error-message" ] [ text model.errorMessage ]
+                ]
+            , button [ onClick address Demo, class "btn btn-success" ] [ text "Demo" ]
             ]
         ,  div [ class "img-container col-xs-6" ]
             [ img [ src "editor.png" ] [] ]
@@ -67,12 +81,12 @@ view address model =
 -- getTextFile : String -> Task FileReader.Error String
 loadData : Effects Action
 loadData =
-    getTextFile "input" `Task.onError` (\err -> Task.succeed (errorMapper err))
+    getTextFile "input" `Task.onError` (\err -> Task.succeed (readfileErrorHandler err))
         |> Task.map FileData
         |> Effects.task
 
-errorMapper : FileReader.Error -> String
-errorMapper err =
+readfileErrorHandler : FileReader.Error -> String
+readfileErrorHandler err =
     case err of
         FileReader.ReadFail -> "File reading error"
         FileReader.NoFileSpecified -> "No file specified"
@@ -91,7 +105,8 @@ sendToRemote raw =
 
 getDemoData : Effects Action
 getDemoData =
-    Http.get tcxDecoder "http://localhost:5000/tcx/test"
+    Http.get tcxDecoder "/tcx/demo"
+    -- Http.get tcxDecoder "http://localhost:5000/tcx/test"
         |> Task.toResult
         |> Task.map JsonData
         |> Effects.task

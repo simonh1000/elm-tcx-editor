@@ -8,9 +8,13 @@ import Result
 type alias Model = List Lap
 
 type alias Lap =
-    { totalTime: Float
+    { startTime : Date
+    , totalTime: Float
     , distance: Float
+    -- max speed
+    -- calories
     , tps: List Trackpoint
+    , averageSpeed : Float
     }
 
 type alias Trackpoint =
@@ -41,10 +45,13 @@ activityDecoder = ("Lap" := list lapDecoder)
 -- toFloat : String -> Result String Float
 lapDecoder: Decoder Lap
 lapDecoder =
-    object3 Lap
+    object5 Lap
+        (at ["$"] (customDecoder ("StartTime" := string) Date.fromString))
         (xtractFloat "TotalTimeSeconds")
         (xtractFloat "DistanceMeters")
         trackDecoder
+        extensionsDecoder
+
 
 trackDecoder: Decoder (List Trackpoint)
 trackDecoder = "Track" := tuple1 identity ("Trackpoint" := list tpDecoder)
@@ -52,10 +59,16 @@ trackDecoder = "Track" := tuple1 identity ("Trackpoint" := list tpDecoder)
 tpDecoder : Decoder Trackpoint
 tpDecoder =
     object3 Trackpoint
-        xtractDate
+        (xtractDate "Time")
         -- ("Time" := tuple1 identity string)
         ("Position" := tuple1 identity posDecoder)
         (xtractFloat "DistanceMeters")
+
+extensionsDecoder : Decoder Float
+extensionsDecoder = "Extensions" := tuple1 identity lxDecoder
+
+lxDecoder : Decoder Float
+lxDecoder = "LX" := tuple1 identity (xtractFloat "AvgSpeed")
 
 posDecoder: Decoder Position
 posDecoder =
@@ -71,5 +84,5 @@ posDecoder =
 xtractFloat: String -> Decoder Float
 xtractFloat str = customDecoder (str := tuple1 identity string) String.toFloat
 
-xtractDate: Decoder Date
-xtractDate = customDecoder ("Time" := tuple1 identity string) Date.fromString
+xtractDate: String -> Decoder Date
+xtractDate fieldname = customDecoder (fieldname := tuple1 identity string) Date.fromString
