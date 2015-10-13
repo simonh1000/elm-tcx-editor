@@ -55,7 +55,7 @@ view address model =
         , div [ class "col-xs-7" ]
             [ div [ id "map", onLoad address ] [] ]
         , div [ class "col-xs-12" ]
-            [ button [ onClick address GotoUpload ] [ text "Load new data" ] ]
+            [ button [ class "btn btn-primary", onClick address GotoUpload ] [ text "Load new data" ] ]
         ]
 
 -- Sends message that map div exists and can be tageted from Javascript land

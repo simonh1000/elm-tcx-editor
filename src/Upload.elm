@@ -95,9 +95,14 @@ readfileErrorHandler err =
 -- TASK - Converting to Json
 
 -- post : Decoder value -> String -> Body -> Task Error value
+
+rootUrl : String
+-- rootUrl = "http://localhost:5000"
+rootUrl = ""
+
 sendToRemote : String -> Effects Action
 sendToRemote raw =
-    Http.post tcxDecoder "http://localhost:5000/tcx" (Http.string <| "data=" ++ Http.uriEncode raw)
+    Http.post tcxDecoder (rootUrl ++ "/tcx") (Http.string <| "data=" ++ Http.uriEncode raw)
         |> Task.toResult
         |> Task.map JsonData
         |> Effects.task
@@ -105,8 +110,7 @@ sendToRemote raw =
 
 getDemoData : Effects Action
 getDemoData =
-    Http.get tcxDecoder "/tcx/demo"
-    -- Http.get tcxDecoder "http://localhost:5000/tcx/test"
+    Http.get tcxDecoder (rootUrl ++ "/tcx/demo")
         |> Task.toResult
         |> Task.map JsonData
         |> Effects.task

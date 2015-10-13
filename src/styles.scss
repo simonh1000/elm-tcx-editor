@@ -11,11 +11,15 @@ body {
         padding-bottom: 30px;
         height: 100%;
         position: relative;
-        & > img {
+        .logo-container {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            height: 60px;
+            top: 5px;
+            right: 5px;
+            width: 100px;
+            img {
+                width: 60px;
+                // width: 100%;
+            }
         }
     }
 }

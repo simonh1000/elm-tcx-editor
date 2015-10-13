@@ -8,7 +8,7 @@ var paths = {
     main : "./src/Main.elm",
     rest : ['src/*.{html,js,png}'],
     sass: 'src/*.scss',
-    dist : 'dist/',
+    dist : '../server/public/elm/',
     distWatch : ['dist/*', '!dist/*.css']
 }
 

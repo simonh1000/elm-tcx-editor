@@ -91,5 +91,10 @@ view address model =
                     [ h1 [] [ text "Garmin GPS .tcx editor" ] ]
                 ]
             , viewTemplate
-            , img [ src "ElmLogo.png" ] []
+            , div [ class "logo-container" ] 
+                [ a [ href "http://www.elm-lang.org" ]
+                    [ img [ src "ElmLogo.png" ] []
+                    , p [] [ text "Built with Elm" ]
+                    ]
+                ]
             ]

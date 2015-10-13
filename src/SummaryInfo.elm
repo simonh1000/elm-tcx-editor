@@ -27,10 +27,10 @@ summaryHeader : Html
 summaryHeader =
     div [ class "row headers" ]
         [ div [ class "col-xs-2" ] [ ]
-        , div [ class "col-xs-2" ] [ text "start"]
+        , div [ class "col-xs-2" ] [ text "Start time"]
         -- , div [ class "col-xs-2" ] [ text "end"]
-        , div [ class "col-xs-2" ] [ text "totalTime" ]
-        , div [ class "col-xs-2" ] [ text "distance" ]
+        , div [ class "col-xs-2" ] [ text "Time" ]
+        , div [ class "col-xs-2" ] [ text "Distance" ]
         , div [ class "col-xs-2" ] [ text "Avg speed"]
         ]
 
